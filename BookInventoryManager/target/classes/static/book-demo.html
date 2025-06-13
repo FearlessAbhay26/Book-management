@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Book Inventory Manager Demo</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2em; }
+        h1 { color: #2c3e50; }
+        form, ul { margin-top: 1em; }
+        input, button { margin: 0.2em; }
+        ul { list-style: none; padding: 0; }
+        li { margin-bottom: 0.5em; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>Book Inventory Manager</h1>
+    <form id="addBookForm">
+        <input type="text" id="title" placeholder="Title" required>
+        <input type="text" id="author" placeholder="Author" required>
+        <input type="text" id="genre" placeholder="Genre" required>
+        <label>
+            <input type="checkbox" id="available"> Available
+        </label>
+        <button type="submit">Add Book</button>
+    </form>
+    <div class="error" id="error"></div>
+    <h2>Books</h2>
+    <ul id="bookList"></ul>
+    <script>
+        const apiBase = 'http://localhost:9090';
+        const bookList = document.getElementById('bookList');
+        const errorDiv = document.getElementById('error');
+
+        async function fetchBooks() {
+            try {
+                const res = await fetch(`${apiBase}/books`);
+                if (!res.ok) throw new Error('Failed to fetch books');
+                const books = await res.json();
+                bookList.innerHTML = '';
+                books.forEach(book => {
+                    const li = document.createElement('li');
+                    li.textContent = `${book.title} by ${book.author} [${book.genre}] - ${book.available ? 'Available' : 'Not Available'}`;
+                    const delBtn = document.createElement('button');
+                    delBtn.textContent = 'Delete';
+                    delBtn.onclick = async () => {
+                        if (confirm('Delete this book?')) {
+                            await deleteBook(book.id);
+                        }
+                    };
+                    li.appendChild(delBtn);
+                    bookList.appendChild(li);
+                });
+            } catch (err) {
+                errorDiv.textContent = err.message;
+            }
+        }
+
+        async function deleteBook(id) {
+            try {
+                const res = await fetch(`${apiBase}/book/${id}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error('Failed to delete book');
+                fetchBooks();
+            } catch (err) {
+                errorDiv.textContent = err.message;
+            }
+        }
+
+        document.getElementById('addBookForm').onsubmit = async (e) => {
+            e.preventDefault();
+            errorDiv.textContent = '';
+            const book = {
+                title: document.getElementById('title').value,
+                author: document.getElementById('author').value,
+                genre: document.getElementById('genre').value,
+                available: document.getElementById('available').checked
+            };
+            try {
+                const res = await fetch(`${apiBase}/book`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(book)
+                });
+                if (!res.ok) throw new Error('Failed to add book');
+                fetchBooks();
+                e.target.reset();
+            } catch (err) {
+                errorDiv.textContent = err.message;
+            }
+        };
+
+        fetchBooks();
+    </script>
+</body>
+</html>

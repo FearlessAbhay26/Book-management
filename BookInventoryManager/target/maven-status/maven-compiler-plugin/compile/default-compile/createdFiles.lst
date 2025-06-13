@@ -1,0 +1,4 @@
+com\kiet\BookInventoryManager\BookInventoryManagerApplication.class
+com\kiet\BookInventoryManager\BookController.class
+com\kiet\BookInventoryManager\BookRepository.class
+com\kiet\BookInventoryManager\Book.class
